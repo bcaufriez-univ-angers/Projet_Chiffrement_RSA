@@ -1,0 +1,97 @@
+<project name="Chiffrement RSA" basedir="." default="main">
+
+    <property name="src.dir"     value="src"/>
+    <property name="client.src.dir" value="${src.dir}/client"/>
+    <property name="server.src.dir" value="${src.dir}/server"/>
+
+    <property name="build.dir"   value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="client.classes.dir" value="${classes.dir}/client"/>
+    <property name="server.classes.dir" value="${classes.dir}/server"/>
+
+    <property name="jar.dir"     value="${build.dir}/jar"/>
+    <property name="client.jar.name" value="client"/>
+    <property name="server.jar.name" value="server"/>
+
+    <property name="client-main-class"  value="client.model.Main"/>
+    <property name="server-main-class"  value="server.model"/>
+    
+
+<!-- ================================= 
+     target: clean
+     ================================= -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+<!-- ================================= 
+     target: compile
+     ================================= -->
+    <target name="compile">
+        <mkdir dir="${classes.dir}"/>
+        <antcall target="compile-client"/>
+        <!-- <antcall target="compile-server"/> -->
+    </target>
+    
+    <target name="compile-client">
+        <mkdir dir="${client.classes.dir}"/>
+        <javac srcdir="${client.src.dir}" destdir="${client.classes.dir}"/>
+    </target>
+    
+    <target name="compile-server">
+        <mkdir dir="${server.classes.dir}"/>
+        <javac srcdir="${server.src.dir}" destdir="${server.classes.dir}"/>
+    </target>
+
+<!-- ================================= 
+     target: jar
+     ================================= -->
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <antcall target="jar-client"/>
+        <!-- <antcall target="jar-server"/> -->
+    </target>
+    
+    <target name="jar-client">
+        <jar destfile="${jar.dir}/${client.jar.name}.jar" basedir="${client.classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${client-main-class}"/>
+            </manifest>
+        </jar>
+    </target>
+    
+    <target name="jar-server">
+        <jar destfile="${jar.dir}/${server.jar.name}.jar" basedir="${server.classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${server-main-class}"/>
+            </manifest>
+        </jar>
+    </target>
+
+<!-- ================================= 
+     target: run
+     ================================= -->
+    <target name="run" depends="jar">
+        <!-- <antcall target="run-server"/> -->
+        <antcall target="run-client"/>
+    </target>
+
+    <target name="run-client">
+        <java jar="${jar.dir}/${client.jar.name}.jar" fork="true"/>
+    </target>
+
+    <target name="run-server">
+        <java jar="${jar.dir}/${server.jar.name}.jar" fork="true"/>
+    </target>
+
+<!-- ================================= 
+     target: clean-build   
+     ================================= -->
+    <target name="clean-build" depends="clean,jar"/>
+
+<!-- ================================= 
+     target: main        
+     ================================= -->
+    <target name="main" depends="clean,run"/>
+
+</project>
