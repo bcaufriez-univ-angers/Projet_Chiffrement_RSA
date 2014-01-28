@@ -13,12 +13,12 @@ public class RSA {
 		this.private_key = new privateKey();
 	}
 	
-	void generateKeys() {
+	public void generateKeys() {
 		generatePublicKey();
 		generatePrivateKey();
 	}
 
-	void generatePublicKey() {
+	public void generatePublicKey() {
 		BigInteger p = BigInteger.probablePrime(128, new Random());
 		BigInteger q = BigInteger.probablePrime(128, new Random());
 		
@@ -34,14 +34,13 @@ public class RSA {
 		
 		while(m.gcd(e).compareTo(new BigInteger("1"))!=0)
 		{
-			System.out.println("on est là");
 			e = e.nextProbablePrime();
 		}
 
 		public_key = new publicKey(n, e);
 	}
 	
-	void generatePrivateKey() {
+	public void generatePrivateKey() {
 		BigInteger u0 = BigInteger.ONE;
 		BigInteger v0 = BigInteger.ZERO;
 		
@@ -70,6 +69,45 @@ public class RSA {
 		v = v1;
 		
 		private_key = new privateKey(public_key.getN(), u);
+	}
+	
+	public String[] encrypt(String message, publicKey public_key) {
+		String[] res = new String[message.length()];
+
+		for(int i = 0 ;i < message.length(); i++)
+		{
+			int charVal = (int)message.charAt(i);
+			BigInteger bigIntVal = new BigInteger(String.valueOf(charVal)).modPow(public_key.getE(), public_key.getN());
+			res[i] = bigIntVal.toString();
+			System.out.println(res[i]);
+		}
+		System.out.println();
+		return res;
+		//return null;
+	}
+	
+	private String implode(String[] args){
+		StringBuffer sb = new StringBuffer();
+		
+		for(int i =0; i < args.length; i++){
+			sb.append(args[i]);
+		}
+		
+		return sb.toString();
+	}
+	
+	public String decrypt(String[] message) {
+		String[] res = new String[message.length];
+		for(int i = 0; i < message.length; i++)
+		{
+			BigInteger bigIntVal = new BigInteger(message[i]);
+			String stringVal = bigIntVal.modPow(private_key.getU(), private_key.getN()).toString();
+			int val = Integer.parseInt(stringVal);
+			res[i] = String.valueOf((char)val);
+			//System.out.println(res[i]);
+		}
+		
+		return implode(res);
 	}
 
 	public publicKey getPublic_key() {
