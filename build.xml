@@ -3,6 +3,7 @@
     <property name="src.dir"     value="src"/>
     <property name="client.src.dir" value="${src.dir}/client"/>
     <property name="server.src.dir" value="${src.dir}/server"/>
+    <property name="common.src.dir" value="${src.dir}/common"/>
 
     <property name="build.dir"   value="build"/>
     <property name="classes.dir" value="${build.dir}/classes"/>
@@ -13,8 +14,8 @@
     <property name="client.jar.name" value="client"/>
     <property name="server.jar.name" value="server"/>
 
-    <property name="client-main-class"  value="client.model.Main"/>
-    <property name="server-main-class"  value="server.model"/>
+    <property name="client-main-class"  value="client.RunClient"/>
+    <property name="server-main-class"  value="server.RunServer"/>
     
 
 <!-- ================================= 
@@ -30,17 +31,23 @@
     <target name="compile">
         <mkdir dir="${classes.dir}"/>
         <antcall target="compile-client"/>
-        <!-- <antcall target="compile-server"/> -->
+        <antcall target="compile-server"/>
     </target>
     
     <target name="compile-client">
         <mkdir dir="${client.classes.dir}"/>
-        <javac srcdir="${client.src.dir}" destdir="${client.classes.dir}"/>
+        <javac destdir="${client.classes.dir}">
+            <src path="${client.src.dir}" />
+            <src path="${common.src.dir}" />
+        </javac>
     </target>
     
     <target name="compile-server">
         <mkdir dir="${server.classes.dir}"/>
-        <javac srcdir="${server.src.dir}" destdir="${server.classes.dir}"/>
+        <javac destdir="${server.classes.dir}">
+            <src path="${server.src.dir}" />
+            <src path="${common.src.dir}" />
+        </javac>
     </target>
 
 <!-- ================================= 
@@ -49,7 +56,7 @@
     <target name="jar" depends="compile">
         <mkdir dir="${jar.dir}"/>
         <antcall target="jar-client"/>
-        <!-- <antcall target="jar-server"/> -->
+        <antcall target="jar-server"/>
     </target>
     
     <target name="jar-client">
@@ -72,8 +79,8 @@
      target: run
      ================================= -->
     <target name="run" depends="jar">
-        <!-- <antcall target="run-server"/> -->
-        <antcall target="run-client"/>
+        <antcall target="run-server"/>
+        <!-- <antcall target="run-client"/> -->
     </target>
 
     <target name="run-client">
