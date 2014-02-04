@@ -3,82 +3,70 @@ import java.net.*;
 import java.util.*;
 import java.io.*;
 
+import client.controller.ListeningClientThread;
 import client.view.ClientChatWindow;
 import common.Contact;
 import common.Message;
+import common.RSA;
+import common.publicKey;
  
 public class ClientChat {
-	//private PrintWriter out = null;
-	//private BufferedReader in = null;
-	ObjectInputStream in = null;
-	ObjectOutputStream out = null;
-	private Socket socket;
 	boolean running;
+	private Socket socket;
+	private ObjectInputStream in = null;
+	ObjectOutputStream out = null;
 	private String addServeur;
 	private int numPort;
 	private String nomClient;
-	ClientChatWindow fenetre;
-	
-	public ClientChat(String addServeur, int numPort, String nomClient/*, FenetreClient2 fenetre*/) {
+	ListeningClientThread listeningClientThread;
+	public ArrayList<Contact> liste;
+	publicKey serverPublicKey;
+	RSA rsa = new RSA();
+
+	public ClientChat(String addServeur, int numPort, String nomClient) {
 		this.addServeur = addServeur;
 		this.numPort = numPort;
 		this.nomClient = nomClient;
+
+		// Connection au serveur
+		try {
+			socket = new Socket(addServeur, numPort);
+		} 
+		catch(Exception e) {
+			System.out.println("Impossible de se connecter au serveur");
+			stop();
+		}
+		
+		// Création des Input/output Streams
+		try
+		{
+			out = new ObjectOutputStream(socket.getOutputStream());
+			in = new ObjectInputStream(socket.getInputStream());
+		}
+		catch (IOException e) {
+			System.out.println("Exception creation new Input/output Streams");
+			stop();
+		}
 	}
 	
-	public String getAddServeur() {
-		return addServeur;
-	}
-
-	public int getNumPort() {
-		return numPort;
-	}
-
-	public String getNomClient() {
-		return nomClient;
-	}
-
-	/*
 	public void start(){
-		System.out.println("début start !");
+		System.out.println("Lancement du ClientChat : " + nomClient);
 		System.out.println(addServeur + " " + numPort + " " + nomClient);
-		running = true;
+		System.out.println("Création des clés privé/public");
+		this.rsa.generateKeys();
+		System.out.println("e : " + rsa.getPublic_key().getE());
+		System.out.println("n : " + rsa.getPublic_key().getN());
+		
 		try {
-			// Connection au serveur
-			try {
-				socket = new Socket(addServeur, numPort);
-			} 
-			catch(Exception e) {
-				System.out.println("Erreur de connection au serveur");
-				close();
-				fenetre.quitter();
-			}			
-			
-			// Création des Input/output Streams
-			try
-			{
-				out = new ObjectOutputStream(socket.getOutputStream());
-				in  = new ObjectInputStream(socket.getInputStream());
-			}
-			catch (IOException e) {
-				System.out.println("Exception creation new Input/output Streams");
-				close();
-				fenetre.quitter();
-			}
-			
-			
-			// Lancement du Thread qui écoute le serveur
-			new ListenFromServer().start();
-			
-			// Envoi le nom du client au serveur
+			// Envoi le nom et la clé public du client au serveur
 			try
 			{
 				sendMessage(new Message(Message.CONNEXION, nomClient));
+				sendMessage(new Message(Message.PUBLIC_KEY, rsa.getPublic_key()));
 			}
 			catch (Exception e) {
 				System.out.println("Exception doing login : " + e);
 			}
-			
-			//out.writeObject(new Message(Message.CONNEXION, nomClient));
 		
 			while (running) {
 				Scanner sc = new Scanner(System.in);
@@ -86,25 +74,14 @@ public class ClientChat {
 				sendMessage(new Message(Message.MESSAGE, msg));
 			}
 
-			close();
 		}
 		catch(Exception e) {
 			System.err.println("Client: "+e);
 		}
 	}
 	
-	public void sendMessage(Message msg) {
-		try {
-			out.writeObject(msg);
-			out.flush();
-		}
-		catch(Exception e) {
-			System.out.println("Exception envoie message vers le serveur: " + e);
-		}
-	}
-	
 	// Fermeture de la connexion
-	public void close() {
+	public void stop() {
 		running = false;
 		try {
 			if(out != null) out.close();
@@ -119,56 +96,59 @@ public class ClientChat {
 		}
 		catch (Exception e) {}
 	}
-	*/
-	//public static void main(String args[]) {
-		//Connexion jd = new Connexion();
-		//jd.setVisible(true);	
-		/*FenetreClient2 fen = new FenetreClient2();
-		Client client = new Client("localhost", 30970, "Benoit", fen);
-		fen.connectToClientProcess(client);
-		client.start();
-		*/
-	//}
-	/*
-	public void setFenetre(ClientChatWindow fen) {
-		this.fenetre = fen;
+	
+	public String[] encrypt(String str) {
+        return this.rsa.encrypt(str, serverPublicKey);
 	}
 	
-	class ListenFromServer extends Thread {
-		public void run() {
-			while (running) {
-				try {
-					Message message = (Message) in.readObject();
-					
-					switch(message.getType()) {
-						case Message.MESSAGE:
-							String msg = message.getMessage();
-							fenetre.setAffichage(msg);
-							System.out.println("lala");
-							System.out.println(msg);
-						break;
-						
-						case Message.LISTES_CLIENTS:
-							ArrayList<Contact> liste = new ArrayList<Contact>();
-							liste = message.getListe();
-							System.out.println("Il y a " + liste.size() + " clients connecté:");
-							for(int i = 0; i < liste.size(); ++i) {
-								System.out.println(liste.get(i).getNom());
-							}
-							fenetre.refreshListeClient(liste);
-						break;
-						
-						case Message.NOUVEAU_CLIENT:
-							int idClient = message.getId();
-							sendMessage(new Message(Message.ACTIVER_CLIENT, idClient));
-						break;
-					} 
-				}
-				catch(Exception e) {
-					System.out.println("Exception ecoute du serveur: " + e);
-				}
-			}
+	public void sendMessage(Message msg) {
+		try {
+			out.writeObject(msg);
+			out.flush();
+		}
+		catch(Exception e) {
+			System.out.println("Exception envoie message vers le serveur: " + e);
 		}
 	}
-	*/
+	
+	public String getAddServeur() {
+		return addServeur;
+	}
+
+	public int getNumPort() {
+		return numPort;
+	}
+
+	public String getNomClient() {
+		return nomClient;
+	}
+	
+	public ObjectInputStream getIn() {
+		return in;
+	}
+
+	public void setIn(ObjectInputStream in) {
+		this.in = in;
+	}
+	
+	public ArrayList<Contact> getListe() {
+		return liste;
+	}
+
+	public void setListe(ArrayList<Contact> liste) {
+		this.liste = liste;
+	}
+
+	public publicKey getServerPublicKey() {
+		return serverPublicKey;
+	}
+
+	public void setServerPublicKey(publicKey serverPublicKey) {
+		this.serverPublicKey = serverPublicKey;
+	}
+
+	public RSA getRsa() {
+		return rsa;
+	}
+	
 }

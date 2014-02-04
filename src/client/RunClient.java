@@ -1,7 +1,8 @@
 package client;
 
+import common.RSA;
+
 import client.controller.LoginController;
-import client.model.RSA;
 import client.view.LoginWindow;
 import client.model.Login;
 

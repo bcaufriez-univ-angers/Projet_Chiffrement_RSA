@@ -27,7 +27,9 @@ public class Login {
 		
 		clientChatWindow.addController(clientChatController);
 		
-		clientChatWindow.setVisible(true);
+		clientChatController.openSocket();
+		
+		clientChat.start();
 	}
 
 	public String getName() {

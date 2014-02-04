@@ -11,6 +11,7 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 public class LoginWindow extends JDialog {
+	Login model;
 	
 	public JLabel labelNom;
 	public JTextField nom;
@@ -23,7 +24,8 @@ public class LoginWindow extends JDialog {
 	//int numPort;
 	public JButton connexion;
 	
-	public LoginWindow(Login login) {
+	public LoginWindow(Login model) {
+		this.model = model;
 		this.setTitle("Connexion Chat");
 		this.setSize(300, 300);
 		this.setAlwaysOnTop(true);

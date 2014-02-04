@@ -2,11 +2,14 @@ package server;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.util.ArrayList;
 
 import common.Contact;
 import common.Message;
+import common.RSA;
+import common.publicKey;
 
 public class DialogThread extends Thread {
 	Socket socket;
@@ -14,47 +17,65 @@ public class DialogThread extends Thread {
 	ArrayList<DialogThread> listeClient;
 	ArrayList<DialogThread> listeClientsAccepte;
 	String nomClient;
-	//PrintWriter out = null;
-	//BufferedReader in = null;
 	ObjectInputStream in = null;
 	ObjectOutputStream out = null;
+	RSA rsa;
+	publicKey clientPublicKey;
 
-	public DialogThread(Socket s, int id, ArrayList<DialogThread> listeClient) {
+	public DialogThread(Socket s, int id, ArrayList<DialogThread> listeClient, RSA rsa) {
 		this.socket = s;
 		this.id = id;
 		this.listeClient = listeClient;
+		this.rsa = rsa;
 	}
 
 	public void run() {
 		boolean running = true;
-		try {
-			//out = new PrintWriter(socket.getOutputStream(), true);
-			//in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			
+		try {			
 			out = new ObjectOutputStream(socket.getOutputStream());
 			in  = new ObjectInputStream(socket.getInputStream());
 			
-			/*nomClient = (String) in.readObject();
-			diffuserMsg(nomClient+" vient de se connecter!");
-			*/
 			while (running) {
 				Message message = (Message) in.readObject();
-				//String msg = message.getMessage();
 				
 				switch(message.getType()) {
+					case Message.PUBLIC_KEY: // Réception de la clé public du client
+						clientPublicKey = message.getPublicKey();
+						System.out.println("Réception de la clé public du client " + nomClient + " : ");
+						System.out.println("e : " + clientPublicKey.getE());
+						System.out.println("n : " + clientPublicKey.getN());
+					break;
+				
 					case Message.MESSAGE:
 						String msg = message.getMessage();
 						diffuserClientsAccepte(new Message(Message.MESSAGE, nomClient + " dit: " + msg));
 						System.out.println("      "+nomClient + " dit: " + msg);
 					break;
 					
+					case Message.CRYPTED_MESSAGE:
+						System.out.println("Réception d'un message crypté :");
+						String[] crypted_msg = message.getMsg();
+						String decrypted_msg = rsa.decrypt(crypted_msg);
+						for(int i = 0; i < crypted_msg.length; i++)
+						{
+							System.out.println(crypted_msg[i]);
+						}
+						System.out.println("Décryption du message :");
+						System.out.println(decrypted_msg);
+						diffuserCryptedMessage(decrypted_msg);
+						//diffuserClientsAccepte(new Message(Message.MESSAGE, nomClient + " dit (uncrypted) : " + decrypted_msg));
+					break;
+					
 					case Message.CONNEXION:
+						// Réception du nom du client
 						nomClient = message.getMessage();
 						diffuserMsg(new Message(Message.MESSAGE, nomClient + " vient de se connecter!"));
 						System.out.println(nomClient + " c'est connecté.");
 						
+						// On initialise la liste des clients accepté avec la liste des clients
 						listeClientsAccepte = new ArrayList<DialogThread>(listeClient);
 
+						// On créé une liste de contact utilisé par le client pour mettre à jour sa vue (cases à cocher) 
 						ArrayList<Contact> liste = new ArrayList<Contact>();
 
 						for(int i = 0; i < listeClient.size(); ++i) {
@@ -69,6 +90,8 @@ public class DialogThread extends Thread {
 							if (clientThread.id != this.id)
 								clientThread.listeClientsAccepte.add(this);
 						}
+						
+						ecrireMsg(new Message(Message.PUBLIC_KEY, rsa.getPublic_key()));
 					break;
 					
 					case Message.DECONNEXION:
@@ -148,6 +171,15 @@ public class DialogThread extends Thread {
 		for(int i = listeClientsAccepte.size(); --i >= 0;) {
 			DialogThread clientThread = listeClientsAccepte.get(i);
 			clientThread.ecrireMsg(msg);
+		}
+	}
+	
+	private synchronized void diffuserCryptedMessage(String msg) {
+		for(int i = listeClientsAccepte.size(); --i >= 0;) {
+			DialogThread clientThread = listeClientsAccepte.get(i);
+			//Message mess = new Message(Message.CRYPTED_MESSAGE, nomClient + " dit (crypted) : " + rsa.encrypt(msg, clientThread.clientPublicKey));
+			Message mess = new Message(Message.CRYPTED_MESSAGE, rsa.encrypt(msg, clientThread.clientPublicKey));
+			clientThread.ecrireMsg(mess);
 		}
 	}
 	
