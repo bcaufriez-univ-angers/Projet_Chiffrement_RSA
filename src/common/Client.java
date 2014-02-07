@@ -53,7 +53,6 @@ public class Client implements Serializable {
 
 	public void setTextColor(Color textColor) {
 		this.textColor = textColor;
-		System.out.println(this.name + " ANCIENNE COULEUR " + textColor + " NOUVELLE COULEUR " + this.textColor);
 	}
 
 	public int getDeviceType() {
