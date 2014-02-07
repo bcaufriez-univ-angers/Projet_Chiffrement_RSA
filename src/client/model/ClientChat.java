@@ -1,39 +1,50 @@
 package client.model;
 import java.net.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.awt.Color;
 import java.io.*;
 
 import client.controller.ListeningClientThread;
-import client.view.ClientChatWindow;
-import common.Contact;
+import common.Client;
 import common.Message;
 import common.RSA;
 import common.publicKey;
  
 public class ClientChat {
-	boolean running;
+	private static boolean displayLog = true;
+	
+	private String name;
+	private String server;
+	private int port;
+	private int keySize;
+	
+	//boolean running;
 	private Socket socket;
 	private ObjectInputStream in = null;
 	ObjectOutputStream out = null;
-	private String addServeur;
-	private int numPort;
-	private String nomClient;
 	ListeningClientThread listeningClientThread;
-	public ArrayList<Contact> liste;
+	public ArrayList<Client> liste;
 	publicKey serverPublicKey;
-	RSA rsa = new RSA();
+	private Color textColor;
+	boolean encrypt;
+	RSA rsa;
+	Boolean run;
 
-	public ClientChat(String addServeur, int numPort, String nomClient) {
-		this.addServeur = addServeur;
-		this.numPort = numPort;
-		this.nomClient = nomClient;
+	public ClientChat(String name, String server, int port, int keySize) {
+		this.name = name;
+		this.server = server;
+		this.port = port;
+		this.keySize = keySize;
+		this.encrypt = true;
 
 		// Connection au serveur
 		try {
-			socket = new Socket(addServeur, numPort);
+			socket = new Socket(server, port);
 		} 
 		catch(Exception e) {
-			System.out.println("Impossible de se connecter au serveur");
+			System.out.println("Unable to connect to server");
 			stop();
 		}
 		
@@ -44,31 +55,35 @@ public class ClientChat {
 			in = new ObjectInputStream(socket.getInputStream());
 		}
 		catch (IOException e) {
-			System.out.println("Exception creation new Input/output Streams");
+			System.out.println("Exception create new Input/output Streams");
 			stop();
 		}
+		rsa = new RSA(keySize);
+
+		int R = (int)(Math.random()*256);
+		int G = (int)(Math.random()*256);
+		int B= (int)(Math.random()*256);
+		textColor = new Color(R, G, B); //random color
 	}
 	
 	public void start(){
-		System.out.println("Lancement du ClientChat : " + nomClient);
-		System.out.println(addServeur + " " + numPort + " " + nomClient);
-		System.out.println("Création des clés privé/public");
 		this.rsa.generateKeys();
-		System.out.println("e : " + rsa.getPublic_key().getE());
-		System.out.println("n : " + rsa.getPublic_key().getN());
+		log("Création des clés privé/public");
 		
 		try {
 			// Envoi le nom et la clé public du client au serveur
 			try
 			{
-				sendMessage(new Message(Message.CONNEXION, nomClient));
-				sendMessage(new Message(Message.PUBLIC_KEY, rsa.getPublic_key()));
+				Client client = new Client(name, rsa.getPublic_key(), textColor, Client.COMPUTER);
+				sendMessage(new Message(Message.CONNECTION, client));
+				log("Envoi demande de connexion au server");
+				log("Envoi de la clé publique au serveur");
 			}
 			catch (Exception e) {
 				System.out.println("Exception doing login : " + e);
 			}
-		
-			while (running) {
+			
+			while (run) {
 				Scanner sc = new Scanner(System.in);
 				String msg = sc.nextLine();
 				sendMessage(new Message(Message.MESSAGE, msg));
@@ -82,7 +97,7 @@ public class ClientChat {
 	
 	// Fermeture de la connexion
 	public void stop() {
-		running = false;
+		//running = false;
 		try {
 			if(out != null) out.close();
 		}
@@ -103,6 +118,7 @@ public class ClientChat {
 	
 	public void sendMessage(Message msg) {
 		try {
+			out.reset();
 			out.writeObject(msg);
 			out.flush();
 		}
@@ -111,18 +127,38 @@ public class ClientChat {
 		}
 	}
 	
-	public String getAddServeur() {
-		return addServeur;
+	public String getName() {
+		return name;
 	}
 
-	public int getNumPort() {
-		return numPort;
+	public void setName(String name) {
+		this.name = name;
 	}
 
-	public String getNomClient() {
-		return nomClient;
+	public String getServer() {
+		return server;
 	}
-	
+
+	public void setServer(String server) {
+		this.server = server;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+	public int getKeySize() {
+		return keySize;
+	}
+
+	public void setKeySize(int keySize) {
+		this.keySize = keySize;
+	}
+
 	public ObjectInputStream getIn() {
 		return in;
 	}
@@ -131,11 +167,11 @@ public class ClientChat {
 		this.in = in;
 	}
 	
-	public ArrayList<Contact> getListe() {
+	public ArrayList<Client> getListe() {
 		return liste;
 	}
 
-	public void setListe(ArrayList<Contact> liste) {
+	public void setListe(ArrayList<Client> liste) {
 		this.liste = liste;
 	}
 
@@ -151,4 +187,27 @@ public class ClientChat {
 		return rsa;
 	}
 	
+	public Color getTextColor() {
+		return textColor;
+	}
+
+	public void setTextColor(Color textColor) {
+		this.textColor = textColor;
+	}
+
+	public boolean isEncrypt() {
+		return encrypt;
+	}
+	
+	public void setEncrypt(boolean encrypt) {
+		this.encrypt = encrypt;
+	}
+	
+	private void log(String log) {
+		if (displayLog) {
+			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+			Date date = new Date();
+			System.out.println("["+ dateFormat.format(date) + "] - " +log);
+		}
+	}
 }

@@ -1,4 +1,5 @@
 package common;
+import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -6,25 +7,51 @@ public class Message implements Serializable {
 
 	private static final long serialVersionUID = -3931591414600840839L;
 	
-	public static final int LISTES_CLIENTS = 0;
-	public static final int MESSAGE = 1;
-	public static final int DECONNEXION = 2;
-	public static final int CONNEXION = 3;
-	public static final int ACTIVER_CLIENT = 4;
-	public static final int DESACTIVER_CLIENT = 5;
-	public static final int NOUVEAU_CLIENT = 6;
-	public static final int PUBLIC_KEY = 7;
-	public static final int CRYPTED_MESSAGE = 8;
+	public static final int CONNECTION = 1;
+	public static final int DECONNECTION = 2;
+	public static final int MESSAGE = 3;
+	public static final int CRYPTED_MESSAGE = 4;
+	public static final int NOTIFICATION = 5;
+	public static final int CHANGE_TEXT_COLOR = 6;
+	public static final int NEW_CLIENT = 7;
+	public static final int ENABLE_CLIENT = 8;
+	public static final int DISABLE_CLIENT = 9;
+	public static final int LIST_CLIENTS = 10;
+
 	int type;
 	String message;
 	String[] msg;
-	ArrayList<Contact> liste;
+	ArrayList<Client> liste;
 	int id;
 	publicKey publicKey;
+	Client client;
+	Color color;
 	
 	public Message(int type, String message) {
 		this.type = type;
 		this.message = message;
+	}
+	
+	public Message(int type, Client client) {
+		this.type = type;
+		this.client = client;
+	}
+	
+	public Message(int type, Color color) {
+		this.type = type;
+		this.color = color;
+	}
+	
+	public Message(int type, String message,  Color color) {
+		this.type = type;
+		this.message = message;
+		this.color = color;
+	}
+	
+	public Message(int type, String[] msg,  Color color) {
+		this.type = type;
+		this.msg = msg;
+		this.color = color;
 	}
 	
 	public Message(int type, String[] msg) {
@@ -37,7 +64,7 @@ public class Message implements Serializable {
 		this.message = message;
 	}
 	
-	public Message(int type, ArrayList<Contact> liste) {
+	public Message(int type, ArrayList<Client> liste) {
 		this.type = type;
 		this.liste = liste;
 	}
@@ -59,8 +86,8 @@ public class Message implements Serializable {
 	public String getMessage() {
 		return message;
 	}
-	
-	public ArrayList<Contact> getListe() {
+
+	public ArrayList<Client> getListe() {
 		return liste;
 	}
 	
@@ -75,5 +102,16 @@ public class Message implements Serializable {
 	public String[] getMsg() {
 		return msg;
 	}
-	
+
+	public Client getClient() {
+		return client;
+	}
+
+	public Color getColor() {
+		return color;
+	}
+
+	public void setColor(Color color) {
+		this.color = color;
+	}
 }

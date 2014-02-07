@@ -36,6 +36,11 @@
     
     <target name="compile-client">
         <mkdir dir="${client.classes.dir}"/>
+	<copy todir="${client.classes.dir}/client/icon"> 
+		<fileset dir="${client.src.dir}/icon" >
+			<include name="**/*.png" />
+		</fileset> 
+	</copy>
         <javac destdir="${client.classes.dir}">
             <src path="${client.src.dir}" />
             <src path="${common.src.dir}" />

@@ -6,11 +6,19 @@ import java.util.Random;
 public class RSA {
 	private publicKey public_key;
 	private privateKey private_key;
+	private int keySize;
 	private BigInteger m = BigInteger.ZERO;
+	
+	public RSA(int keySize) {
+		this.public_key = new publicKey();
+		this.private_key = new privateKey();
+		this.keySize = keySize;
+	}
 	
 	public RSA() {
 		this.public_key = new publicKey();
 		this.private_key = new privateKey();
+		this.keySize = 128;
 	}
 	
 	public void generateKeys() {
@@ -19,8 +27,8 @@ public class RSA {
 	}
 
 	public void generatePublicKey() {
-		BigInteger p = BigInteger.probablePrime(128, new Random());
-		BigInteger q = BigInteger.probablePrime(128, new Random());
+		BigInteger p = BigInteger.probablePrime(keySize, new Random());
+		BigInteger q = BigInteger.probablePrime(keySize, new Random());
 		
 		while (p.compareTo(q) == 0)
 		{
@@ -79,11 +87,8 @@ public class RSA {
 			int charVal = (int)message.charAt(i);
 			BigInteger bigIntVal = new BigInteger(String.valueOf(charVal)).modPow(public_key.getE(), public_key.getN());
 			res[i] = bigIntVal.toString();
-			System.out.println(res[i]);
 		}
-		System.out.println();
 		return res;
-		//return null;
 	}
 	
 	private String implode(String[] args){
@@ -104,7 +109,6 @@ public class RSA {
 			String stringVal = bigIntVal.modPow(private_key.getU(), private_key.getN()).toString();
 			int val = Integer.parseInt(stringVal);
 			res[i] = String.valueOf((char)val);
-			//System.out.println(res[i]);
 		}
 		
 		return implode(res);

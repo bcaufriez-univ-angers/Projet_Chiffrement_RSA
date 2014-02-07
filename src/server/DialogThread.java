@@ -2,25 +2,29 @@ package server;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.math.BigInteger;
 import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
-import common.Contact;
+import common.Client;
 import common.Message;
 import common.RSA;
-import common.publicKey;
 
 public class DialogThread extends Thread {
+	private static boolean displayLog = true;
+	public static final int AVAILABLE_CLIENTS = 0;	// Tous les clients connectés
+	public static final int ENABLE_CLIENTS = 1;		// Les clients acceptés
+	
 	Socket socket;
 	int id;
 	ArrayList<DialogThread> listeClient;
 	ArrayList<DialogThread> listeClientsAccepte;
-	String nomClient;
 	ObjectInputStream in = null;
 	ObjectOutputStream out = null;
 	RSA rsa;
-	publicKey clientPublicKey;
+	Client client;
 
 	public DialogThread(Socket s, int id, ArrayList<DialogThread> listeClient, RSA rsa) {
 		this.socket = s;
@@ -39,109 +43,116 @@ public class DialogThread extends Thread {
 				Message message = (Message) in.readObject();
 				
 				switch(message.getType()) {
-					case Message.PUBLIC_KEY: // Réception de la clé public du client
-						clientPublicKey = message.getPublicKey();
-						System.out.println("Réception de la clé public du client " + nomClient + " : ");
-						System.out.println("e : " + clientPublicKey.getE());
-						System.out.println("n : " + clientPublicKey.getN());
-					break;
-				
+
 					case Message.MESSAGE:
 						String msg = message.getMessage();
-						diffuserClientsAccepte(new Message(Message.MESSAGE, nomClient + " dit: " + msg));
-						System.out.println("      "+nomClient + " dit: " + msg);
+						/*
+						DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+						Date date = new Date();
+						diffuserMsg(AVAILABLE_CLIENTS, new Message(Message.MESSAGE, "[" + dateFormat.format(date) + "] " + client.getName() + " dit: " + msg));
+						*/
+						diffuserMsg(AVAILABLE_CLIENTS, new Message(Message.MESSAGE, client.getName() + " dit: " + msg));
+						log("Envoi d'un message non crypté par le client \"" + client.getName() + "\"\n" +
+								"\t\t\t    " + client.getName() + " dit: " + msg);
 					break;
 					
 					case Message.CRYPTED_MESSAGE:
-						System.out.println("Réception d'un message crypté :");
 						String[] crypted_msg = message.getMsg();
-						String decrypted_msg = rsa.decrypt(crypted_msg);
+						/*
 						for(int i = 0; i < crypted_msg.length; i++)
-						{
 							System.out.println(crypted_msg[i]);
-						}
-						System.out.println("Décryption du message :");
-						System.out.println(decrypted_msg);
-						diffuserCryptedMessage(decrypted_msg);
-						//diffuserClientsAccepte(new Message(Message.MESSAGE, nomClient + " dit (uncrypted) : " + decrypted_msg));
+						*/
+						String decrypted_msg = rsa.decrypt(crypted_msg);
+						diffuserMsg(ENABLE_CLIENTS, new Message(Message.CRYPTED_MESSAGE, decrypted_msg));
+						log("Envoi d'un message crypté par le client \"" + client.getName() + "\"\n" +
+								"\t\t\t    " + client.getName() + " dit: " + decrypted_msg);
 					break;
 					
-					case Message.CONNEXION:
-						// Réception du nom du client
-						nomClient = message.getMessage();
-						diffuserMsg(new Message(Message.MESSAGE, nomClient + " vient de se connecter!"));
-						System.out.println(nomClient + " c'est connecté.");
+					case Message.CONNECTION:
+						// Réception des informations du client
+						client = message.getClient();
+						client.setId(id); // On attribue l'identifiant au client
+						if (client.getDeviceType() == Client.COMPUTER)
+							log("Réception demande de connexion au server du client \"" + client.getName() + "\" à partir d'un \"ordinateur\"");
+						if (client.getDeviceType() == Client.MOBILE)
+							log("Réception demande de connexion au server du client \"" + client.getName() + "\" à partir d'un \"mobile\"");
 						
+						log("Réception de la clé publique du client \"" + client.getName() + "\"" + "\n" +
+								"\t\t\t    " + "e : " + client.getPublicKey().getE() + "\n" +
+								"\t\t\t    " + "n : " + client.getPublicKey().getN());
+						
+						// Le serveur envoie sa clé publique au client
+						ecrireMsg(new Message(Message.CONNECTION, rsa.getPublic_key()));
+						log("Envoi de la clé publique du serveur au client \"" + client.getName() + "\"");
+						
+						// Le serveur notifie aux clients la connexion d'un nouveau client
+						diffuserMsg(AVAILABLE_CLIENTS, new Message(Message.NOTIFICATION, client.getName() + " vient de se connecter !"));
+						log("Le client \"" + client.getName() + "\" est connecté");
+
+						// Le serveur envoie la liste des clients connectés au client
+						sendListClient();
+
 						// On initialise la liste des clients accepté avec la liste des clients
 						listeClientsAccepte = new ArrayList<DialogThread>(listeClient);
 
-						// On créé une liste de contact utilisé par le client pour mettre à jour sa vue (cases à cocher) 
-						ArrayList<Contact> liste = new ArrayList<Contact>();
-
-						for(int i = 0; i < listeClient.size(); ++i) {
-							DialogThread clientThread = listeClient.get(i);
-							//if(clientThread.id != this.id)
-								liste.add(new Contact(clientThread.id, clientThread.nomClient));
-						}
-						
-						diffuserMsg(new Message(Message.LISTES_CLIENTS, liste)); // Envoi de la liste des clients à chaque client
 						for(int i = 0; i < listeClient.size(); ++i) { 	// active l'envoi de messages vers ce client, par tous les autres
 							DialogThread clientThread = listeClient.get(i);
 							if (clientThread.id != this.id)
 								clientThread.listeClientsAccepte.add(this);
 						}
 						
-						ecrireMsg(new Message(Message.PUBLIC_KEY, rsa.getPublic_key()));
 					break;
 					
-					case Message.DECONNEXION:
+					case Message.DECONNECTION:
 						running = false;
-						remove(id);
-						close();
 						
-						//
-						ArrayList<Contact> liste2 = new ArrayList<Contact>();
+						// On supprime le client de la liste
 						for(int i = 0; i < listeClient.size(); ++i) {
 							DialogThread clientThread = listeClient.get(i);
-								liste2.add(new Contact(clientThread.id, clientThread.nomClient));
+							if(clientThread.id == id)
+								listeClient.remove(i);
 						}
-						diffuserMsg(new Message(Message.LISTES_CLIENTS, liste2)); // Envoi de la liste des clients à chaque client
-						//
 						
-						diffuserMsg(new Message(Message.MESSAGE, nomClient + " c'est déconnecter!"));
-						System.out.println(nomClient + " c'est déconnecté.");
+						// On ferme la connexion du client
+						close();
+						
+						// Le serveur renvoie la liste des clients connectés à chaque client
+						sendListClient();
+						
+						// Le serveur notifie aux clients la déconnexion du client
+						diffuserMsg(AVAILABLE_CLIENTS ,new Message(Message.NOTIFICATION, client.getName() + " vient de se déconnecter !"));
+						log("Le client \"" + client.getName() + "\" c'est déconnecté.");
 					break;
 					
-					case Message.LISTES_CLIENTS:
-						ecrireMsg(new Message(Message.LISTES_CLIENTS, "liste clients"));
-					break;
-					
-					case Message.DESACTIVER_CLIENT:
+					case Message.DISABLE_CLIENT:
 						int idClient = message.getId();
 						for(int i = 0; i < listeClientsAccepte.size(); ++i) {
 							DialogThread clientThread = listeClientsAccepte.get(i);
 							if(clientThread.id == idClient) {
-								System.out.println(nomClient + " a désactivé "+clientThread.nomClient);
 								listeClientsAccepte.remove(i);
+								log("Le client \"" + client.getName() + " a désactivé le client \"" + clientThread.client.getName() + "\"");
 							}
 						}
 					break;
 					
-					case Message.ACTIVER_CLIENT:
+					case Message.ENABLE_CLIENT:
 						int idClientActive = message.getId();
-						System.out.println("activation du clien"+idClientActive);
 						for(int i = 0; i < listeClient.size(); ++i) {
 							DialogThread clientThread = listeClient.get(i);
 							if(clientThread.id == idClientActive) {
-								System.out.println(nomClient + " a activé "+clientThread.nomClient);
 								listeClientsAccepte.add(clientThread);
+								log("Le client \"" + client.getName() + " a activé le client \"" + clientThread.client.getName() + "\"");
 							}
 						}
 					break;
+					
+					case Message.CHANGE_TEXT_COLOR:
+						client.setTextColor(message.getColor());
+						sendListClient();
+						diffuserMsg(AVAILABLE_CLIENTS, new Message(Message.NOTIFICATION, client.getName() + " vient de changer la couleur de son texte !"));
+					break;
 				}
 			}
-			
-			//remove(id);
 			close();
 
 		}
@@ -150,8 +161,12 @@ public class DialogThread extends Thread {
 		}
 	}
 
+	/**
+	 * Fonction qui envoie un message au client
+	 */
 	public void ecrireMsg(Message msg) {
 		try {
+			out.reset();
 			out.writeObject(msg);
 			out.flush();
 		}
@@ -160,34 +175,44 @@ public class DialogThread extends Thread {
 		}
 	}
 	
-	private synchronized void diffuserMsg(Message msg) {
+	/**
+	 * Fonction qui envoie à chaque client une liste de tous les clients connecté au chat
+	 */
+	private void sendListClient() {
 		for(int i = listeClient.size(); --i >= 0;) {
-			DialogThread clientThread = listeClient.get(i);
-			clientThread.ecrireMsg(msg);
+			DialogThread currentClient = listeClient.get(i);
+			
+			ArrayList<Client> liste = new ArrayList<Client>();
+			for(int j = 0; j < listeClient.size(); ++j) { // On rempli la liste avec les clients connectés
+				DialogThread clientThread = listeClient.get(j);
+				if(clientThread.id != currentClient.id)	// On n'ajoute pas le client courant à la liste
+					liste.add(clientThread.client);
+			}
+			currentClient.ecrireMsg(new Message(Message.LIST_CLIENTS, liste));
 		}
 	}
 	
-	private synchronized void diffuserClientsAccepte(Message msg) {
-		for(int i = listeClientsAccepte.size(); --i >= 0;) {
-			DialogThread clientThread = listeClientsAccepte.get(i);
-			clientThread.ecrireMsg(msg);
+	/**
+	 * Fonction qui permet de diffuser un message aux clients du chat
+	 */
+	private synchronized void diffuserMsg(int authorizedClient, Message msg) {
+		if (authorizedClient == AVAILABLE_CLIENTS) { 	// Tous les clients connectés
+			for(int i = listeClient.size(); --i >= 0;) {
+				DialogThread clientThread = listeClient.get(i);
+				clientThread.ecrireMsg(msg);
+			}
 		}
-	}
-	
-	private synchronized void diffuserCryptedMessage(String msg) {
-		for(int i = listeClientsAccepte.size(); --i >= 0;) {
-			DialogThread clientThread = listeClientsAccepte.get(i);
-			//Message mess = new Message(Message.CRYPTED_MESSAGE, nomClient + " dit (crypted) : " + rsa.encrypt(msg, clientThread.clientPublicKey));
-			Message mess = new Message(Message.CRYPTED_MESSAGE, rsa.encrypt(msg, clientThread.clientPublicKey));
-			clientThread.ecrireMsg(mess);
-		}
-	}
-	
-	synchronized void remove(int id) {
-		for(int i = 0; i < listeClient.size(); ++i) {
-			DialogThread clientThread = listeClient.get(i);
-			if(clientThread.id == id)
-				listeClient.remove(i);
+		else if (authorizedClient == ENABLE_CLIENTS) {	// Les clients acceptés
+			for(int i = listeClientsAccepte.size(); --i >= 0;) {
+				DialogThread clientThread = listeClientsAccepte.get(i);
+				if (msg.getType() == Message.CRYPTED_MESSAGE) {
+					String str = msg.getMessage();
+					clientThread.ecrireMsg(new Message(Message.CRYPTED_MESSAGE, rsa.encrypt(str, clientThread.client.getPublicKey()), client.getTextColor()));
+				}
+				else if (msg.getType() == Message.MESSAGE) {
+					clientThread.ecrireMsg(msg);
+				}
+			}
 		}
 	}
 	
@@ -204,5 +229,13 @@ public class DialogThread extends Thread {
 				if(socket != null) socket.close();
 			}
 			catch (Exception e) {}
+	}
+	
+	private void log(String log) {
+		if (displayLog) {
+			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+			Date date = new Date();
+			System.out.println("["+ dateFormat.format(date) + "] - " +log);
+		}
 	}
 }

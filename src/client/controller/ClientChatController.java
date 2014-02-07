@@ -1,32 +1,37 @@
-package client.controller;
+ package client.controller;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
+import javax.swing.JFileChooser;
 
 import client.model.ClientChat;
-import client.model.Login;
 import client.view.ClientChatWindow;
-import client.view.LoginWindow;
 
-import common.Contact;
+import common.Client;
 import common.Message;
 
-public class ClientChatController implements ActionListener, KeyListener/*, ItemListener */{
+public class ClientChatController implements ActionListener, KeyListener, ItemListener {
+	private static boolean displayLog = true;
 	
 	ClientChat model;
 	ClientChatWindow view;
 	ListeningClientThread listeningClientThread;
 	
 	public ClientChatController(ClientChat model, ClientChatWindow view) {
-		System.out.println("Constructor Client Chat Controller");
 		this.model = model;
 		this.view = view;
 	}
@@ -34,103 +39,175 @@ public class ClientChatController implements ActionListener, KeyListener/*, Item
 	public void openSocket() {
         listeningClientThread = new ListeningClientThread(this, model);
         listeningClientThread.start();
-        System.out.println("ListeningThread created!");
     }
-	
-	public void keyTyped(KeyEvent e) {
-
-	}
 
 	public void keyPressed(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-			System.out.println("Press ENTER key");
 			if ( !view.getSaisie().getText().equals("") ) { // Si la zone de saisie n'est pas vide
-				//sendMessage(new Message(Message.MESSAGE, view.getSaisie().getText()));
-				sendMessage(new Message(Message.CRYPTED_MESSAGE, model.encrypt(view.getSaisie().getText())));
+				if (model.isEncrypt() == true)
+					sendMessage(new Message(Message.CRYPTED_MESSAGE, model.encrypt(view.getSaisie().getText())));
+				else
+					sendMessage(new Message(Message.MESSAGE, view.getSaisie().getText()));
 			}
 		}
 	}
-
-	public void keyReleased(KeyEvent e) {
+	
+	/*
+	 * Permet de gérer 
+	 */
+	public void itemStateChanged(ItemEvent e) {
+		Object source = e.getItemSelectable();
 		
+		if (source == view.buttonEncrypt){
+			if (e.getStateChange() == ItemEvent.DESELECTED) {
+				view.buttonEncrypt.setIcon(new ImageIcon(getClass().getResource("/client/icon/buttonNotEncrypt.png")));
+				model.setEncrypt(false);
+				log("Désactivation du cryptage des messages");
+			}
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				view.buttonEncrypt.setIcon(new ImageIcon(getClass().getResource("/client/icon/buttonEncrypt.png")));
+				model.setEncrypt(true);
+				log("Activation du cryptage des messages");
+			}
+		}
 	}
 
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		
 		if (source == view.quitter){
-			sendMessage(new Message(Message.DECONNEXION, ""));
+			sendMessage(new Message(Message.DECONNECTION, ""));
 		}
 		
 		if (source == view.envoyer){
 			if ( !view.getSaisie().getText().equals("") ) { // Si la zone de saisie n'est pas vide
-				//sendMessage(new Message(Message.MESSAGE, view.getSaisie().getText()));
-				sendMessage(new Message(Message.CRYPTED_MESSAGE, model.encrypt(view.getSaisie().getText())));
+				if (model.isEncrypt() == true)
+					sendMessage(new Message(Message.CRYPTED_MESSAGE, model.encrypt(view.getSaisie().getText())));
+				else
+					sendMessage(new Message(Message.MESSAGE, view.getSaisie().getText()));
 			}
 		}
+		
+		if (source == view.buttonSendFile){
+			JFileChooser choix = new JFileChooser();
+			int retour = choix.showOpenDialog(null);
+			if(retour == JFileChooser.APPROVE_OPTION){
+			   // un fichier a été choisi (sortie par OK)
+			   // nom du fichier  choisi 
+			   choix.getSelectedFile().getName();
+			   // chemin absolu du fichier choisi
+			   choix.getSelectedFile().getAbsolutePath();
+			}
+			//else ... ;// pas de fichier choisi
+		}
+		
+		if (source == view.buttonTextColor){
+			Color textColor = JColorChooser.showDialog (null, "Couleur du texte", model.getTextColor());
+			if(textColor != null) {
+				sendMessage(new Message(Message.CHANGE_TEXT_COLOR, textColor));
+			}
+		}
+	}
+	
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	public void sendMessage(Message message) {
 		switch(message.getType()) {
 			case Message.MESSAGE:
 				model.sendMessage(message);
+				log("Envoi d'un message non crypté :\n" +
+						"\t\t\t    " + view.getSaisie().getText());
 				view.getSaisie().setText(""); // On efface la zone de saisie
 			break;
 			
 			case Message.CRYPTED_MESSAGE:
 				model.sendMessage(message);
+				log("Envoi d'un message crypté :\n" +
+						"\t\t\t    " + view.getSaisie().getText());
+
 				view.getSaisie().setText(""); // On efface la zone de saisie
 			break;
 			
-			case Message.DECONNEXION:
+			case Message.DECONNECTION:
 				model.sendMessage(message);
 				listeningClientThread.stop(); // On stop le thread d'écoute
 				model.stop();
+				log("Déconnexion");
 				System.exit(0);
+			break;
+			
+			case Message.CHANGE_TEXT_COLOR:
+				model.sendMessage(message);
+				model.setTextColor(message.getColor());
+				view.getSaisie().setForeground(model.getTextColor());
+				log("Changement de couleur du texte");
 			break;
 		} 
 	}
 	
 	public void receivedMessage(Message message) {
 		switch(message.getType()) {
-			case Message.MESSAGE:
+			case Message.NOTIFICATION:	// Réception d'une notification
+				String notification = message.getMessage();
+				view.getAffichage().append(notification+"\n"); // On affiche la notification dans la zone d'affichage
+				log("Réception d'une notification :\n" +
+						"\t\t\t    " + notification);
+			break;
+			
+			case Message.MESSAGE:	// Réception d'un message non crypté
 				String msg = message.getMessage();
 				view.getAffichage().append(msg+"\n"); // On affiche le message dans la zone d'affichage
-				System.out.println(msg);
+				log("Réception d'un message non crypté :\n" +
+						"\t\t\t    " + msg);
 			break;
 			
-			case Message.CRYPTED_MESSAGE:
-				System.out.println("Début mess cripté");
-				String[] mess = message.getMsg();
-				String str = model.getRsa().decrypt(mess);
-				view.getAffichage().append(str+"\n"); // On affiche le message dans la zone d'affichage
-				System.out.println(str);
-				System.out.println("Fin mess cripté");
+			case Message.CRYPTED_MESSAGE: // Réception d'un message crypté
+				String[] crypted_message = message.getMsg();
+				/*
+				 * TODO Réception d'un message crypté sous forme de String
+				 */
+				String str_crypted_message = model.getRsa().decrypt(crypted_message);
+				view.getAffichage().append(str_crypted_message+"\n"); // On affiche le message dans la zone d'affichage
+				log("Réception d'un message crypté :\n" +
+						"\t\t\t    " + str_crypted_message);
 			break;
 			
-			case Message.PUBLIC_KEY: // Réception de la clé public du serveur
+			case Message.CONNECTION: // Réception de la clé public du serveur
 				model.setServerPublicKey(message.getPublicKey());
-				System.out.println("Réception de la clé public du server : ");
-				System.out.println("e : " + message.getPublicKey().getE());
-				System.out.println("n : " + message.getPublicKey().getN());
+				log("Réception de la clé publique du server :\n" +
+						"\t\t\t    " + "e : " + message.getPublicKey().getE() + "\n" +
+						"\t\t\t    " + "n : " + message.getPublicKey().getN());
+				log("Connexion au serveur");
+				view.getSaisie().setForeground(model.getTextColor());
 			break;
 			
-			case Message.LISTES_CLIENTS:
+			case Message.LIST_CLIENTS:
+				// permet de mettre à jour sa vue (cases à cocher) 
 				model.setListe(message.getListe());
-				ArrayList<Contact> liste = new ArrayList<Contact>();
-				liste = message.getListe();
-				System.out.println("Il y a " + liste.size() + " clients connecté:");
-				for(int i = 0; i < liste.size(); ++i) {
-					System.out.println("ID : " + liste.get(i).getId() + " - Name : " + liste.get(i).getNom());
-				}
-				//fenetre.refreshListeClient(liste);
-				//view.updateListeClient();
 				updateListeClient();
+				ArrayList<Client> liste = message.getListe();
+				if (liste.size() >= 1 ) {
+					log("Réception de la liste des clients connectés : " + liste.size() + " clients connectés :");
+					for(int i = 0; i < liste.size(); ++i)
+						log("\t\t\t    " + "- " + liste.get(i).getName());
+				}
+				else
+					log("Réception de la liste des clients connectés : Aucun client connecté");
 			break;
 			
-			case Message.NOUVEAU_CLIENT:
+			case Message.NEW_CLIENT:
 				int idClient = message.getId();
-				model.sendMessage(new Message(Message.ACTIVER_CLIENT, idClient));
+				model.sendMessage(new Message(Message.ENABLE_CLIENT, idClient));
 			break;
 		} 
 	}
@@ -139,22 +216,24 @@ public class ClientChatController implements ActionListener, KeyListener/*, Item
 		view.getListeClient().removeAll();
 		view.getListeClient().setLayout(new BoxLayout(view.getListeClient(), BoxLayout.Y_AXIS));
 		
-		ArrayList<Contact> liste = model.getListe();
+		ArrayList<Client> liste = model.getListe();
 		JCheckBox[] tab = new JCheckBox[liste.size()];
-		for(int i=0; i< liste.size(); i++) {
+		for(int i = liste.size(); --i >= 0;) {
 			final int id = liste.get(i).getId();
-			tab[i] = new JCheckBox(liste.get(i).getNom());
+			final String name = liste.get(i).getName();
+			tab[i] = new JCheckBox(liste.get(i).getName());
+			tab[i].setForeground(liste.get(i).getTextColor());
 			tab[i].setSelected(true);
 			tab[i].addItemListener(new ItemListener() {
 				
 				public void itemStateChanged(ItemEvent e) {
 					if (e.getStateChange() == ItemEvent.DESELECTED) {
-						System.out.println("Id du client désactivé: "+id);
-						model.sendMessage(new Message(Message.DESACTIVER_CLIENT, id));
+						model.sendMessage(new Message(Message.DISABLE_CLIENT, id));
+						log("Désactivation du client " + name);
 					}
 					if (e.getStateChange() == ItemEvent.SELECTED) {
-						System.out.println("Id du client activé: "+id);
-						model.sendMessage(new Message(Message.ACTIVER_CLIENT, id));
+						model.sendMessage(new Message(Message.ENABLE_CLIENT, id));
+						log("Activation du client " + name);
 					}
 					
 				}
@@ -162,7 +241,16 @@ public class ClientChatController implements ActionListener, KeyListener/*, Item
 
 			view.getListeClient().add(tab[i]);
 		}
+		
 		view.getListeClient().revalidate();
 		view.getListeClient().repaint();		
+	}
+	
+	private void log(String log) {
+		if (displayLog) {
+			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+			Date date = new Date();
+			System.out.println("["+ dateFormat.format(date) + "] - " +log);
+		}
 	}
 }

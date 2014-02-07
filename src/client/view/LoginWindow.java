@@ -3,94 +3,75 @@ package client.view;
 import client.controller.LoginController;
 import client.model.Login;
 
-import java.awt.FlowLayout;
+import java.awt.GridLayout;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 public class LoginWindow extends JDialog {
 	Login model;
 	
-	public JLabel labelNom;
-	public JTextField nom;
-	//String nomClient;
-	public JLabel labelServeur;
-	public JTextField serveur;
-	//String addServeur;
+	public JPanel panel;
+	public JLabel labelName;
+	public JTextField name;
+	public JLabel labelServer;
+	public JTextField server;
 	public JLabel labelPort;
 	public JTextField port;
-	//int numPort;
-	public JButton connexion;
+	public JLabel labelKeySize;
+	public JComboBox keySize;
+	public JButton cancel;
+	public JButton connection;
 	
 	public LoginWindow(Login model) {
 		this.model = model;
 		this.setTitle("Connexion Chat");
-		this.setSize(300, 300);
-		this.setAlwaysOnTop(true);
-		this.isResizable();
+		this.setSize(300, 400);
+		this.setLocationRelativeTo(null);
+		this.setResizable(false);
 		this.setModal(true);
 		
-		this.setLayout(new FlowLayout());
-			//System.out.println("Constructor View");
-			labelNom = new JLabel("Nom : ");
-			nom = new JTextField(10);
-			labelServeur = new JLabel("Serveur : ");
-			serveur = new JTextField("localhost",15);
-			labelPort = new JLabel("Port : ");
-			port = new JTextField("30970",6);
-			connexion = new JButton("Connexion");
-			//connexion.addActionListener(this);
-			
-			this.add(labelNom);
-			this.add(nom);
-			this.add(labelServeur);
-			this.add(serveur);
-			this.add(labelPort);
-			this.add(port);
-			this.add(connexion);
-			
-			pack();
-			//System.out.println("END Constructor View");
-			//setVisible(true);
-			
-	}
-	/*
-	public void actionPerformed(ActionEvent e) {
-		nomClient = nom.getText();
-		addServeur = serveur.getText();
-		numPort = Integer.parseInt(port.getText());
+		panel = new JPanel();
+		panel.setLayout(new GridLayout(5, 2, 10, 10));
+		labelName = new JLabel("Nom : ");
+		name = new JTextField(10);
+		labelServer = new JLabel("Serveur : ");
+		server = new JTextField("localhost",15);
+		labelPort = new JLabel("Port : ");
+		port = new JTextField("30970",6);
+		labelKeySize = new JLabel("Taille de la clé : ");
+		String[] size = {"128", "256", "512", "1024", "2048"};
+		keySize = new JComboBox(size);
+		cancel = new JButton("Annuler");
+		connection = new JButton("Connexion");
 		
-		this.dispose(); // détruit la boite de dialogue
-	}*/
+		panel.add(labelName);
+		panel.add(name);
+		panel.add(labelServer);
+		panel.add(server);
+		panel.add(labelPort);
+		panel.add(port);
+		panel.add(labelKeySize);
+		panel.add(keySize);
+		panel.add(cancel);
+		panel.add(connection);
+		
+		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		this.setContentPane(panel);
+		this.pack();
+	}
 	
 	public void addController(LoginController controller){
-		connexion.addActionListener(controller);
+		cancel.addActionListener(controller);
+		connection.addActionListener(controller);
+		name.addKeyListener(controller);
+		server.addKeyListener(controller);
+		port.addKeyListener(controller);
+		keySize.addKeyListener(controller);
 	}
-
-	/*
-	public Client getClient() {
-		System.out.println(addServeur + " " + numPort + " " + nomClient);
-		return new Client(addServeur, numPort, nomClient);
-	}
-	
-	public String getNomClient() {
-		return nomClient;
-	}
-	*/
-	/*
-	public static void main(String args[]) {
-		
-		Connexion dialogueConnexion = new Connexion();
-		dialogueConnexion.setVisible(true);
-		
-		FenetreClient2 fen = new FenetreClient2(dialogueConnexion.getNomClient());
-		Client client = dialogueConnexion.getClient();
-		client.setFenetre(fen);
-		fen.connectToClientProcess(client);
-		client.start();
-		
-	}
-	*/
 }

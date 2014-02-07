@@ -2,12 +2,8 @@ package client.view;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 
 import javax.swing.*;
-import javax.swing.text.DefaultCaret;
-
-import common.Contact;
 
 import client.controller.ClientChatController;
 import client.model.ClientChat;
@@ -22,20 +18,25 @@ public class ClientChatWindow extends JFrame {
 	JScrollPane scroll_listeClient = new JScrollPane(listeClient);
 
 	JTextArea affichage = new JTextArea();
+	//JTextPane affichage = new JTextPane();
     JScrollPane scroll_affichage = new JScrollPane(affichage);
     
     JTextArea saisie = new JTextArea();
     JScrollPane scroll_saisie = new JScrollPane(saisie);
     
     JPanel PanelBouton = new JPanel();
-    public JButton envoyer = new JButton("Envoyer");
     public JButton quitter = new JButton("Quitter");
+    public JButton envoyer = new JButton("Envoyer");
+    public JButton buttonTextColor = new JButton(new ImageIcon(getClass().getResource("/client/icon/buttonTextColor.png")));
+    public JButton buttonSendFile = new JButton(new ImageIcon(getClass().getResource("/client/icon/buttonSendFile.png")));
+    public JCheckBox buttonEncrypt = new JCheckBox(new ImageIcon(getClass().getResource("/client/icon/buttonEncrypt.png")));
+    
     FlowLayout boutons = new FlowLayout();
 	
 	public ClientChatWindow(ClientChat model) {
-		super("Chat : " + model.getNomClient());
+		super("Chat : " + model.getName());
 		this.model = model;
-		this.setTitle("Chat : "+ model.getNomClient());
+		this.setTitle("Chat : "+ model.getName());
 		this.setSize(500, 500);
 		this.setMinimumSize(new Dimension(500, 500));
 	    this.setLocationRelativeTo(null);
@@ -43,9 +44,21 @@ public class ClientChatWindow extends JFrame {
 
 	    panelPrincipal = new JPanel();
 	    
+	    buttonSendFile.setContentAreaFilled(false);
+	    buttonSendFile.setBorderPainted(false);
+	    buttonSendFile.setMargin(new Insets(1,1,1,1)); 
+	    buttonTextColor.setContentAreaFilled(false);
+	    buttonTextColor.setBorderPainted(false);
+	    buttonTextColor.setMargin(new Insets(1,1,1,1)); 
+	    
 	    PanelBouton.setLayout(new FlowLayout());
 	    	PanelBouton.add(quitter);
-	    	PanelBouton.add(envoyer);	
+	    	PanelBouton.add(envoyer);
+	    	PanelBouton.add(buttonSendFile);
+	    	PanelBouton.add(buttonTextColor);
+	    	PanelBouton.add(buttonEncrypt);
+	    
+	    buttonEncrypt.setSelected(true);
 	    
 	    saisie.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none");
 	    saisie.setLineWrap(true);
@@ -80,7 +93,7 @@ public class ClientChatWindow extends JFrame {
 			    e.getAdjustable().setValue(e.getAdjustable().getMaximum());  
 			}
 		});
-
+		
 		this.setContentPane(panelPrincipal);
 	    this.setVisible(true);
 	}
@@ -88,9 +101,12 @@ public class ClientChatWindow extends JFrame {
 	public void addController(ClientChatController controller) {
 		quitter.addActionListener(controller);
 	    envoyer.addActionListener(controller);
+	    buttonSendFile.addActionListener(controller);
+	    buttonTextColor.addActionListener(controller);
+	    buttonEncrypt.addItemListener(controller);
 	    saisie.addKeyListener(controller);
 	}
-
+	
 	public JTextArea getAffichage() {
 		return affichage;
 	}
@@ -98,7 +114,15 @@ public class ClientChatWindow extends JFrame {
 	public void setAffichage(JTextArea affichage) {
 		this.affichage = affichage;
 	}
+	/*
+	public JTextPane getAffichage() {
+		return affichage;
+	}
 
+	public void setAffichage(JTextPane affichage) {
+		this.affichage = affichage;
+	}
+	*/
 	public JTextArea getSaisie() {
 		return saisie;
 	}
@@ -114,5 +138,4 @@ public class ClientChatWindow extends JFrame {
 	public void setListeClient(JPanel listeClient) {
 		this.listeClient = listeClient;
 	}
-	
 }
