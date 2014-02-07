@@ -150,6 +150,7 @@ public class DialogThread extends Thread {
 						client.setTextColor(message.getColor());
 						sendListClient();
 						diffuserMsg(AVAILABLE_CLIENTS, new Message(Message.NOTIFICATION, client.getName() + " vient de changer la couleur de son texte !"));
+						log("Le client \"" + client.getName() + " vient de changer la couleur de son texte ");
 					break;
 				}
 			}
