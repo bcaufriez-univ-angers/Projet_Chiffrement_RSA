@@ -9,6 +9,7 @@ import java.io.*;
 import client.controller.ListeningClientThread;
 import common.Client;
 import common.Message;
+import common.MyColor;
 import common.RSA;
 import common.publicKey;
  
@@ -27,7 +28,7 @@ public class ClientChat {
 	ListeningClientThread listeningClientThread;
 	public ArrayList<Client> liste;
 	publicKey serverPublicKey;
-	private Color textColor;
+	private MyColor textColor;
 	boolean encrypt;
 	RSA rsa;
 	Boolean run;
@@ -63,7 +64,7 @@ public class ClientChat {
 		int R = (int)(Math.random()*256);
 		int G = (int)(Math.random()*256);
 		int B= (int)(Math.random()*256);
-		textColor = new Color(R, G, B); //random color
+		textColor = new MyColor(R, G, B); //random color
 	}
 	
 	public void start(){
@@ -188,11 +189,14 @@ public class ClientChat {
 	}
 	
 	public Color getTextColor() {
-		return textColor;
+		Color color = new Color(textColor.getR(), textColor.getG(), textColor.getB());
+		return color;
 	}
 
-	public void setTextColor(Color textColor) {
-		this.textColor = textColor;
+	public void setTextColor(Color color) {
+		this.textColor.setR(color.getRed());
+		this.textColor.setG(color.getGreen());
+		this.textColor.setB(color.getBlue());
 	}
 
 	public boolean isEncrypt() {

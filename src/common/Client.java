@@ -1,6 +1,5 @@
 package common;
 
-import java.awt.Color;
 import java.io.Serializable;
 
 public class Client implements Serializable {
@@ -13,10 +12,10 @@ public class Client implements Serializable {
 	private int id;
 	private String name;
 	private publicKey publicKey;
-	private Color textColor;
+	private MyColor textColor;
 	private int deviceType;
 	
-	public Client(String name, publicKey publicKey, Color textColor, int deviceType) {
+	public Client(String name, publicKey publicKey, MyColor textColor, int deviceType) {
 		this.name = name;
 		this.publicKey = publicKey;
 		this.textColor = textColor;
@@ -47,11 +46,11 @@ public class Client implements Serializable {
 		this.publicKey = publicKey;
 	}
 
-	public Color getTextColor() {
+	public MyColor getTextColor() {
 		return textColor;
 	}
 
-	public void setTextColor(Color textColor) {
+	public void setTextColor(MyColor textColor) {
 		this.textColor = textColor;
 	}
 

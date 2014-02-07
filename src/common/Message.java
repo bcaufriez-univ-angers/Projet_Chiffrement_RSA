@@ -1,5 +1,5 @@
 package common;
-import java.awt.Color;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -25,7 +25,7 @@ public class Message implements Serializable {
 	int id;
 	publicKey publicKey;
 	Client client;
-	Color color;
+	MyColor color;
 	
 	public Message(int type, String message) {
 		this.type = type;
@@ -37,18 +37,18 @@ public class Message implements Serializable {
 		this.client = client;
 	}
 	
-	public Message(int type, Color color) {
+	public Message(int type, MyColor color) {
 		this.type = type;
 		this.color = color;
 	}
 	
-	public Message(int type, String message,  Color color) {
+	public Message(int type, String message,  MyColor color) {
 		this.type = type;
 		this.message = message;
 		this.color = color;
 	}
 	
-	public Message(int type, String[] msg,  Color color) {
+	public Message(int type, String[] msg,  MyColor color) {
 		this.type = type;
 		this.msg = msg;
 		this.color = color;
@@ -107,11 +107,11 @@ public class Message implements Serializable {
 		return client;
 	}
 
-	public Color getColor() {
+	public MyColor getColor() {
 		return color;
 	}
 
-	public void setColor(Color color) {
+	public void setColor(MyColor color) {
 		this.color = color;
 	}
 }

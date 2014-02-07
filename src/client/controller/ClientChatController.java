@@ -23,6 +23,7 @@ import client.view.ClientChatWindow;
 
 import common.Client;
 import common.Message;
+import common.MyColor;
 
 public class ClientChatController implements ActionListener, KeyListener, ItemListener {
 	private static boolean displayLog = true;
@@ -102,7 +103,8 @@ public class ClientChatController implements ActionListener, KeyListener, ItemLi
 		}
 		
 		if (source == view.buttonTextColor){
-			Color textColor = JColorChooser.showDialog (null, "Couleur du texte", model.getTextColor());
+			Color color = JColorChooser.showDialog (null, "Couleur du texte", model.getTextColor());
+			MyColor textColor = new MyColor(color.getRed(), color.getGreen(), color.getBlue());
 			if(textColor != null) {
 				sendMessage(new Message(Message.CHANGE_TEXT_COLOR, textColor));
 			}
@@ -148,7 +150,8 @@ public class ClientChatController implements ActionListener, KeyListener, ItemLi
 			
 			case Message.CHANGE_TEXT_COLOR:
 				model.sendMessage(message);
-				model.setTextColor(message.getColor());
+				Color color = new Color(message.getColor().getR(), message.getColor().getG(), message.getColor().getB());
+				model.setTextColor(color);
 				view.getSaisie().setForeground(model.getTextColor());
 				log("Changement de couleur du texte");
 			break;
@@ -222,7 +225,8 @@ public class ClientChatController implements ActionListener, KeyListener, ItemLi
 			final int id = liste.get(i).getId();
 			final String name = liste.get(i).getName();
 			tab[i] = new JCheckBox(liste.get(i).getName());
-			tab[i].setForeground(liste.get(i).getTextColor());
+			Color color = new Color(liste.get(i).getTextColor().getR(), liste.get(i).getTextColor().getG(), liste.get(i).getTextColor().getB());
+			tab[i].setForeground(color);
 			tab[i].setSelected(true);
 			tab[i].addItemListener(new ItemListener() {
 				
