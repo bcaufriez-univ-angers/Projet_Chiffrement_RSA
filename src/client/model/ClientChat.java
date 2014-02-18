@@ -21,7 +21,6 @@ public class ClientChat {
 	private int port;
 	private int keySize;
 	
-	//boolean running;
 	private Socket socket;
 	private ObjectInputStream in = null;
 	ObjectOutputStream out = null;
@@ -83,13 +82,6 @@ public class ClientChat {
 			catch (Exception e) {
 				System.out.println("Exception doing login : " + e);
 			}
-			
-			while (run) {
-				Scanner sc = new Scanner(System.in);
-				String msg = sc.nextLine();
-				sendMessage(new Message(Message.MESSAGE, msg));
-			}
-
 		}
 		catch(Exception e) {
 			System.err.println("Client: "+e);

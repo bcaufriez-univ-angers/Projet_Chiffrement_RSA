@@ -14,6 +14,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 public class LoginWindow extends JDialog {
+	private static final long serialVersionUID = 6469989745558647972L;
+
 	Login model;
 	
 	public JPanel panel;

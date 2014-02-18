@@ -1,7 +1,6 @@
 package client.view;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -20,14 +19,14 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
-import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.Document;
-import javax.swing.text.StyleContext;
 
 import client.controller.ClientChatController;
 import client.model.ClientChat;
 
 public class ClientChatWindow extends JFrame {
+	private static final long serialVersionUID = -1835176531852027892L;
+
 	ClientChat model;
 	
 	JPanel panelPrincipal;

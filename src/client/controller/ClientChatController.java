@@ -3,8 +3,6 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
@@ -19,15 +17,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JFileChooser;
-import javax.swing.JScrollBar;
-import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.JTextComponent;
 import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
-import javax.swing.text.StyledDocument;
 
 import client.model.ClientChat;
 import client.view.ClientChatWindow;
