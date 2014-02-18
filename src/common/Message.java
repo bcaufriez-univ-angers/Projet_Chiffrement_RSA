@@ -25,11 +25,18 @@ public class Message implements Serializable {
 	int id;
 	publicKey publicKey;
 	Client client;
+	String name;
 	MyColor color;
 	
 	public Message(int type, String message) {
 		this.type = type;
 		this.message = message;
+	}
+	
+	public Message(int type, String message, String name) {
+		this.type = type;
+		this.message = message;
+		this.name = name;
 	}
 	
 	public Message(int type, Client client) {
@@ -48,10 +55,18 @@ public class Message implements Serializable {
 		this.color = color;
 	}
 	
-	public Message(int type, String[] msg,  MyColor color) {
+	public Message(int type, String message,  MyColor color, String name) {
+		this.type = type;
+		this.message = message;
+		this.color = color;
+		this.name = name;
+	}
+	
+	public Message(int type, String[] msg,  MyColor color, String name) {
 		this.type = type;
 		this.msg = msg;
 		this.color = color;
+		this.name = name;
 	}
 	
 	public Message(int type, String[] msg) {
@@ -113,5 +128,9 @@ public class Message implements Serializable {
 
 	public void setColor(MyColor color) {
 		this.color = color;
+	}
+
+	public String getName() {
+		return name;
 	}
 }

@@ -51,7 +51,7 @@ public class DialogThread extends Thread {
 						Date date = new Date();
 						diffuserMsg(AVAILABLE_CLIENTS, new Message(Message.MESSAGE, "[" + dateFormat.format(date) + "] " + client.getName() + " dit: " + msg));
 						*/
-						diffuserMsg(AVAILABLE_CLIENTS, new Message(Message.MESSAGE, client.getName() + " dit: " + msg));
+						diffuserMsg(AVAILABLE_CLIENTS, new Message(Message.MESSAGE, msg, client.getTextColor(), client.getName()));
 						log("Envoi d'un message non crypté par le client \"" + client.getName() + "\"\n" +
 								"\t\t\t    " + client.getName() + " dit: " + msg);
 					break;
@@ -63,7 +63,7 @@ public class DialogThread extends Thread {
 							System.out.println(crypted_msg[i]);
 						*/
 						String decrypted_msg = rsa.decrypt(crypted_msg);
-						diffuserMsg(ENABLE_CLIENTS, new Message(Message.CRYPTED_MESSAGE, decrypted_msg));
+						diffuserMsg(ENABLE_CLIENTS, new Message(Message.CRYPTED_MESSAGE, decrypted_msg, client.getName()));
 						log("Envoi d'un message crypté par le client \"" + client.getName() + "\"\n" +
 								"\t\t\t    " + client.getName() + " dit: " + decrypted_msg);
 					break;
@@ -208,7 +208,7 @@ public class DialogThread extends Thread {
 				DialogThread clientThread = listeClientsAccepte.get(i);
 				if (msg.getType() == Message.CRYPTED_MESSAGE) {
 					String str = msg.getMessage();
-					clientThread.ecrireMsg(new Message(Message.CRYPTED_MESSAGE, rsa.encrypt(str, clientThread.client.getPublicKey()), client.getTextColor()));
+					clientThread.ecrireMsg(new Message(Message.CRYPTED_MESSAGE, rsa.encrypt(str, clientThread.client.getPublicKey()), client.getTextColor(), client.getName()));
 				}
 				else if (msg.getType() == Message.MESSAGE) {
 					clientThread.ecrireMsg(msg);

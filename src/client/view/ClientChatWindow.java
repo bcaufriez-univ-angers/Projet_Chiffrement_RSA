@@ -18,7 +18,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
+import javax.swing.text.DefaultStyledDocument;
+import javax.swing.text.Document;
+import javax.swing.text.StyleContext;
 
 import client.controller.ClientChatController;
 import client.model.ClientChat;
@@ -32,9 +36,9 @@ public class ClientChatWindow extends JFrame {
 	JPanel listeClient = new JPanel();
 	JScrollPane scroll_listeClient = new JScrollPane(listeClient);
 
-	JTextArea affichage = new JTextArea();
-	//JTextPane affichage = new JTextPane();
-    JScrollPane scroll_affichage = new JScrollPane(affichage);
+	JTextPane affichage = new JTextPane();
+	Document document = affichage.getDocument();
+	public JScrollPane scroll_affichage = new JScrollPane(affichage);
     
     JTextArea saisie = new JTextArea();
     JScrollPane scroll_saisie = new JScrollPane(saisie);
@@ -69,7 +73,7 @@ public class ClientChatWindow extends JFrame {
 	    PanelBouton.setLayout(new FlowLayout());
 	    	PanelBouton.add(quitter);
 	    	PanelBouton.add(envoyer);
-	    	PanelBouton.add(buttonSendFile);
+	    	//PanelBouton.add(buttonSendFile);
 	    	PanelBouton.add(buttonTextColor);
 	    	PanelBouton.add(buttonEncrypt);
 	    
@@ -78,10 +82,7 @@ public class ClientChatWindow extends JFrame {
 	    saisie.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none");
 	    saisie.setLineWrap(true);
 	    saisie.setWrapStyleWord(false);
-	    affichage.setLineWrap(true);
-	    affichage.setWrapStyleWord(false);
-	    affichage.setEnabled(false);	// désactive la saisie dans le JTextArea affichage
-	    affichage.setDisabledTextColor(Color.BLUE); // couleur du texte affiché
+	    affichage.setEditable(false);	// désactive la saisie dans le JTextArea affichage
 	    
 	    splitPaneHoriz = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listeClient, scroll_affichage);
 	    splitPaneHoriz.setDividerLocation(100);
@@ -95,20 +96,19 @@ public class ClientChatWindow extends JFrame {
 		panelPrincipal.setLayout(new BorderLayout());
 			panelPrincipal.add(splitPaneVert, BorderLayout.CENTER);
 			panelPrincipal.add(PanelBouton, BorderLayout.SOUTH);
-
+		
 		// Permet d'ajuster automatiquement la scrollBar
-		scroll_affichage.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {  
-			public void adjustmentValueChanged(AdjustmentEvent e) {  
-			    e.getAdjustable().setValue(e.getAdjustable().getMaximum());  
+		scroll_affichage.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+			public void adjustmentValueChanged(AdjustmentEvent e) {
+				e.getAdjustable().setValue(e.getAdjustable().getMaximum());
 			}
 		});
-		
-		scroll_saisie.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {  
-			public void adjustmentValueChanged(AdjustmentEvent e) {  
-			    e.getAdjustable().setValue(e.getAdjustable().getMaximum());  
+
+		scroll_saisie.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+			public void adjustmentValueChanged(AdjustmentEvent e) {
+				e.getAdjustable().setValue(e.getAdjustable().getMaximum());
 			}
 		});
-		
 		this.setContentPane(panelPrincipal);
 	    this.setVisible(true);
 	}
@@ -121,23 +121,19 @@ public class ClientChatWindow extends JFrame {
 	    buttonEncrypt.addItemListener(controller);
 	    saisie.addKeyListener(controller);
 	}
-	
-	public JTextArea getAffichage() {
+
+	public JTextPane getAffichage() {
 		return affichage;
 	}
 
-	public void setAffichage(JTextArea affichage) {
-		this.affichage = affichage;
-	}
-	/*
-	public JTextPane getAffichage() {
-		return affichage;
+	public Document getDocument() {
+		return document;
 	}
 
 	public void setAffichage(JTextPane affichage) {
 		this.affichage = affichage;
 	}
-	*/
+	
 	public JTextArea getSaisie() {
 		return saisie;
 	}

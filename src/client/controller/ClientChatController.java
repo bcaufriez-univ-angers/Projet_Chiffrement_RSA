@@ -3,6 +3,8 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
@@ -17,6 +19,15 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JFileChooser;
+import javax.swing.JScrollBar;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 
 import client.model.ClientChat;
 import client.view.ClientChatWindow;
@@ -162,14 +173,44 @@ public class ClientChatController implements ActionListener, KeyListener, ItemLi
 		switch(message.getType()) {
 			case Message.NOTIFICATION:	// Réception d'une notification
 				String notification = message.getMessage();
-				view.getAffichage().append(notification+"\n"); // On affiche la notification dans la zone d'affichage
+				try {
+					// Define a keyword attribute
+					SimpleAttributeSet keyWord = new SimpleAttributeSet();
+					StyleConstants.setBold(keyWord, true);
+					StyleConstants.setItalic(keyWord, true);
+					StyleConstants.setFontFamily(keyWord, "Courier");
+					StyleConstants.setFontSize(keyWord, 10);
+					StyleConstants.setForeground(keyWord, Color.BLACK);
+					StyleConstants.setAlignment(keyWord, 1);
+					view.getDocument().insertString(view.getDocument().getLength(), notification + "\n", keyWord);  // On affiche la notification dans la zone d'affichage
+				} catch (BadLocationException e) {
+					e.printStackTrace();
+				}
 				log("Réception d'une notification :\n" +
 						"\t\t\t    " + notification);
 			break;
 			
 			case Message.MESSAGE:	// Réception d'un message non crypté
 				String msg = message.getMessage();
-				view.getAffichage().append(msg+"\n"); // On affiche le message dans la zone d'affichage
+				Color messageTextColor = new Color(message.getColor().getR(), message.getColor().getG(), message.getColor().getB());
+				try {
+					SimpleAttributeSet style = new SimpleAttributeSet();
+					StyleConstants.setBold(style, true);
+					StyleConstants.setFontFamily(style, "Courier");
+					StyleConstants.setFontSize(style, 12);
+					StyleConstants.setForeground(style, Color.BLACK);
+					StyleConstants.setAlignment(style, 1);
+					view.getDocument().insertString(view.getDocument().getLength(), message.getName() + " dit : ", style); // On affiche le message dans la zone d'affichage
+					
+					SimpleAttributeSet style2 = new SimpleAttributeSet();
+					StyleConstants.setFontFamily(style2, "Courier");
+					StyleConstants.setFontSize(style2, 12);
+					StyleConstants.setForeground(style2, messageTextColor);
+					StyleConstants.setAlignment(style2, 1);
+					view.getDocument().insertString(view.getDocument().getLength(), msg + "\n", style2);  // On affiche le message dans la zone d'affichage
+				} catch (BadLocationException e) {
+					e.printStackTrace();
+				}
 				log("Réception d'un message non crypté :\n" +
 						"\t\t\t    " + msg);
 			break;
@@ -180,7 +221,25 @@ public class ClientChatController implements ActionListener, KeyListener, ItemLi
 				 * TODO Réception d'un message crypté sous forme de String
 				 */
 				String str_crypted_message = model.getRsa().decrypt(crypted_message);
-				view.getAffichage().append(str_crypted_message+"\n"); // On affiche le message dans la zone d'affichage
+				Color cryptedMessageTextColor = new Color(message.getColor().getR(), message.getColor().getG(), message.getColor().getB());
+				try {
+					SimpleAttributeSet style = new SimpleAttributeSet();
+					StyleConstants.setBold(style, true);
+					StyleConstants.setFontFamily(style, "Courier");
+					StyleConstants.setFontSize(style, 12);
+					StyleConstants.setForeground(style, Color.BLACK);
+					StyleConstants.setAlignment(style, 1);
+					view.getDocument().insertString(view.getDocument().getLength(), message.getName() + " dit : ", style); // On affiche le message dans la zone d'affichage
+					
+					SimpleAttributeSet style2 = new SimpleAttributeSet();
+					StyleConstants.setFontFamily(style2, "Courier");
+					StyleConstants.setFontSize(style2, 12);
+					StyleConstants.setForeground(style2, cryptedMessageTextColor);
+					StyleConstants.setAlignment(style2, 1);
+					view.getDocument().insertString(view.getDocument().getLength(), str_crypted_message + "\n", style2);  // On affiche le message dans la zone d'affichage
+				} catch (BadLocationException e) {
+					e.printStackTrace();
+				}
 				log("Réception d'un message crypté :\n" +
 						"\t\t\t    " + str_crypted_message);
 			break;
@@ -212,7 +271,8 @@ public class ClientChatController implements ActionListener, KeyListener, ItemLi
 				int idClient = message.getId();
 				model.sendMessage(new Message(Message.ENABLE_CLIENT, idClient));
 			break;
-		} 
+		}
+		//view.scroll_affichage.getVerticalScrollBar().setValue(view.scroll_affichage.getVerticalScrollBar().getMaximum()); // Permet d'ajuster automatiquement la scrollBar vers le bas
 	}
 
 	public void updateListeClient() {
