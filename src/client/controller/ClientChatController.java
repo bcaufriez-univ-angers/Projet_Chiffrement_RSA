@@ -107,8 +107,8 @@ public class ClientChatController implements ActionListener, KeyListener, ItemLi
 		
 		if (source == view.buttonTextColor){
 			Color color = JColorChooser.showDialog (null, "Couleur du texte", model.getTextColor());
+			if(color != null) {
 			MyColor textColor = new MyColor(color.getRed(), color.getGreen(), color.getBlue());
-			if(textColor != null) {
 				sendMessage(new Message(Message.CHANGE_TEXT_COLOR, textColor));
 			}
 		}
